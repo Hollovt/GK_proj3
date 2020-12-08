@@ -17,13 +17,45 @@ namespace GK_proj3
 {
     public partial class Form1 : Form
     {
+        private MatrixBuilder<double> M = Matrix<double>.Build;
+        private NumberFormatInfo provider = new NumberFormatInfo();
         private Matrix<double> BradfordMatrix = Matrix<double>.Build.DenseOfArray(new double[,] { { 0.8951000,  0.2664000, - 0.1614000 }, { -0.7502000,  1.7135000,  0.0367000 }, { 0.0389000, - 0.0685000,  1.0296000 } });
-        public Form1()
+
+        //////////values for changeIluminate////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        private double xs;
+        private double ys;
+        private double zs;
+
+        private double Xs;
+        private double Ys;
+        private double Zs;
+
+        private double xd;
+        private double yd;
+        private double zd;
+
+        private double Xd;
+        private double Yd;
+        private double Zd;
+
+        private Matrix<double> tempBradfordMatrix;
+        private Matrix<double> tempBradfordMatrix2;
+        private double ps;
+        private double gs;
+        private double bs;
+
+        private double pd;
+        private double gd;
+        private double bd;
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        public Form1()  
         {
             InitializeComponent();
+            provider.NumberGroupSeparator = ".";
+
         }
 
-        private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
+    private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (listBox1.SelectedIndex == 0)
             {
@@ -245,26 +277,55 @@ namespace GK_proj3
 
             if (pictureBox1.Image == null)
                 return;
-            Bitmap bmp = new Bitmap(pictureBox1.Image);
+            DirectBitmap bmp = new DirectBitmap(pictureBox1.Image.Width, pictureBox1.Image.Height);
+            Bitmap tmpBitmap = new Bitmap(pictureBox1.Image);
+            //////////values for changeIluminate//////////////////////////////////////////////////////////////////////////////////////////////////////////
+            xs = Convert.ToDouble(textBox2.Text, provider);
+            ys = Convert.ToDouble(textBox3.Text, provider);
+            zs = 1 - xs - ys;
+
+            Xs = xs / ys;
+            Ys = 1;
+            Zs = zs / ys;
+
+            xd = Convert.ToDouble(textBox17.Text, provider);
+            yd = Convert.ToDouble(textBox16.Text, provider);
+            zd = 1 - xd - yd;
+
+            Xd = xd / yd;
+            Yd = 1;
+            Zd = zd / yd;
+
+            tempBradfordMatrix = BradfordMatrix * M.DenseOfArray(new double[,] { { Xs }, { Ys }, { Zs } });
+            tempBradfordMatrix2 = BradfordMatrix * M.DenseOfArray(new double[,] { { Xd }, { Yd }, { Zd } });
+            ps = tempBradfordMatrix.ToArray()[0, 0];
+            gs = tempBradfordMatrix.ToArray()[1, 0];
+            bs = tempBradfordMatrix.ToArray()[2, 0];
+
+            pd = tempBradfordMatrix2.ToArray()[0, 0];
+            gd = tempBradfordMatrix2.ToArray()[1, 0];
+            bd = tempBradfordMatrix2.ToArray()[2, 0];
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
             for (int i=0; i<pictureBox1.Image.Width; i++)
             {
                 for(int j=0; j<pictureBox1.Image.Height; j++)
                 {
 
-                    Color a = bmp.GetPixel(i, j);
+                    Color a = tmpBitmap.GetPixel(i, j);
                     (double, double, double) temp = ScaleRGB((a.R, a.G, a.B));
-                    double[,] m3 ={ { temp.Item1}, { temp.Item2 }, { temp.Item3 } };
-                    Matrix<double> matrix3 = M.DenseOfArray(m3);
-                    Matrix<double> XYZ = matrix1*matrix3;
-                    XYZ = changeIluminate(XYZ);
+                    
+                    Matrix<double> matrix3 = M.DenseOfArray(new double [,] { { temp.Item1 }, { temp.Item2 }, { temp.Item3 } });
+                    Matrix<double> XYZ = changeIluminate(matrix1*matrix3);
+                    
                     Matrix<double> RGB =matrix2 *XYZ;
                     var tmp = RGB.ToArray();
-
+                     
                     //bmp.SetPixel(i, j, (Color.FromArgb(Math.Max(Math.Min((int)(tmp[0, 0] * 255),255), 0), Math.Max(Math.Min((int)(tmp[1, 0] * 255),255),0), Math.Max(Math.Min((int)(tmp[2, 0] * 255),255),0))));
                     bmp.SetPixel(i, j, (Color.FromArgb(Math.Max(Math.Min((int)(Math.Pow(tmp[0, 0], GammaSource / GammaDestiny) * 255),255), 0), Math.Max(Math.Min((int)(Math.Pow(tmp[1, 0], GammaSource / GammaDestiny) * 255),255),0), Math.Max(Math.Min((int)(Math.Pow(tmp[2, 0], GammaSource / GammaDestiny) * 255),255),0))));
                 }
             }
-            pictureBox2.Image = bmp;
+            pictureBox2.Image = bmp.Bitmap;
             pictureBox2.Refresh();
         }
         private (double, double, double) ScaleRGB((int, int, int) a )
@@ -420,40 +481,9 @@ namespace GK_proj3
         }
         private Matrix<double> changeIluminate(Matrix<double> XYZs)
         {
-            var M = Matrix<double>.Build;
-            NumberFormatInfo provider = new NumberFormatInfo();
-            provider.NumberGroupSeparator = ".";
-
-            double xs = Convert.ToDouble(textBox2.Text, provider);
-            double ys = Convert.ToDouble(textBox3.Text, provider);
-            double zs = 1 - xs - ys;
-
-            double Xs = xs / ys;
-            double Ys = 1;
-            double Zs = zs / ys;
-
-            double xd = Convert.ToDouble(textBox17.Text, provider);
-            double yd = Convert.ToDouble(textBox16.Text, provider);
-            double zd = 1 - xd - yd;
-
-            double Xd = xd / yd;
-            double Yd = 1;
-            double Zd = zd / yd;
-
-            var temp = BradfordMatrix*M.DenseOfArray(new double[,] { { Xs }, { Ys }, { Zs } });
-            var temp2 = BradfordMatrix * M.DenseOfArray(new double[,] { { Xd }, { Yd }, { Zd } });
-            double ps = temp.ToArray()[0, 0];
-            double gs = temp.ToArray()[1, 0];
-            double bs = temp.ToArray()[2, 0];
-
-            double pd = temp2.ToArray()[0, 0];
-            double gd = temp2.ToArray()[1, 0];
-            double bd = temp2.ToArray()[2, 0];
-
-
+           
             return BradfordMatrix.Inverse() * M.DenseOfArray(new double[,] { { pd / ps, 0, 0 }, { 0, gd / gs, 0 }, { 0, 0, bd / bs } })* BradfordMatrix * XYZs;
 
-           
         }
 
         private void save_Click(object sender, EventArgs e)
