@@ -1,2 +1,2 @@
 # Computer Graphics - project 2
-![](![](introducion.gif))
+![](![](https://media.giphy.com/media/M2aDxPqccTPrKKIVWM/giphy.gif))
