@@ -1,2 +1,2 @@
 # Computer Graphics - project 2
-![](![](name-of-giphy.gif))
+![](![](https://name-of-giphy.gif))
